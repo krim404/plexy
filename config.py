@@ -115,4 +115,12 @@ class Config(object):
         if not len(self.moviedb_apikey) == 32:
             raise ConfigError("Length of moviedb.apikey is not correct")
 
+        tvdb = config.get("tvdb",{})
+        self.tvdb_apikey = tvdb.get("apikey")
+        #if not self.tvdb_apikey:
+        #    raise ConfigError("tvdb.apikey is a required field")
+        self.tvdbkey = ""
+
         self.command_prefix = config.get("command_prefix", "!c") + " "
+
+
