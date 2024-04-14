@@ -136,8 +136,11 @@ class Command(object):
         # Get German movie title for display reasons
         title = self.plexy.getTitle(id, was)
         try:
-            self.plexy.sendRequest(id, was)
-            text = f"Ich habe [{title}](https://www.themoviedb.org/{was}/{id}) für dich angefordert."
+            result = self.plexy.sendRequest(id, was)
+            if result.json()["isError"] == True:
+                text = f"Fehler bei [{title}](https://www.themoviedb.org/{was}/{id}): " + result.json()["errorMessage"]
+            else:
+                text = f"Ich habe [{title}](https://www.themoviedb.org/{was}/{id}) für dich angefordert."
             await send_text_to_room(self.client, self.room.room_id, text)
         except UserWarning:
             text = "Es trat ein Fehler beim Anfordern des Titels auf."
