@@ -54,3 +54,4 @@ moviedb:
   language: de-de
   # Secret key for the TMDb API
   apikey: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+

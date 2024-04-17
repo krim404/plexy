@@ -69,7 +69,7 @@ class Command(object):
             return
     async def _show_commands(self):
         """Show all available commands"""
-        text = "**Verfügbare Befehle**:<br>- `!plex film <Filmname>` -- Fordert einen gewünschten Film an.<br>- `!plex serie <Serienname>` -- Fordert eine gewünschte Serie an.<br>- `!plex flist` -- Listet alle angefragten Filme auf.<br>- `!plex tlist` -- Listet alle angefragten Serien auf.<br>- `!plex fdelete` -- Löscht alle Filmanfragen, die mitlerweilen verfügbar sind.<br>- `!plex tdelete` -- Löscht alle Serienanfragen, die mitlerweilen verfügbar sind.<br>- `!plex popular <Anzahl>` -- Zeigt aktuell beliebte Filme an."
+        text = "**Verfügbare Befehle**:<br>- `!plex film <Filmname>` -- Fordert einen gewünschten Film an.<br>- `!plex serie <Serienname>` -- Fordert eine gewünschte Serie an.<br>- `!plex flist` -- Listet alle angefragten Filme auf.<br>- `!plex tlist` -- Listet alle angefragten Serien auf.<br>- `!plex fdelete` -- Löscht alle Filmanfragen, die verfügbar sind.<br>- `!plex tdelete` -- Löscht alle Serienanfragen, die verfügbar sind.<br>- `!plex popular <Anzahl>` -- Zeigt aktuell beliebte Filme an."
         await send_text_to_room(self.client, self.room.room_id, text)
 
     async def _show_requests(self, was: str = "movie"):
