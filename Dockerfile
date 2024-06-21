@@ -1,7 +1,7 @@
 FROM python:3.9
 
 LABEL name="Plexy"
-LABEL authors="Felix"
+LABEL authors="Felix and Krim"
 LABEL description="Matrix bot for Plex and Ombi"
 
 ADD requirements.txt /opt/
