@@ -4,6 +4,9 @@ stages:
   - code_quality
   - safety
 
+variables:
+  AFTER_SCRIPT_IGNORE_ERRORS: "true"
+  
 build-and-push:
   image: docker:26.1.4
   stage: build
@@ -12,8 +15,11 @@ build-and-push:
   before_script:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
-    - docker buildx create --use --name builder --rm
+    - docker buildx create --use --name builder
     - docker buildx build --platform linux/amd64,linux/arm64 -t $CI_REGISTRY_IMAGE:latest --push .
+  after_script:
+    - docker buildx stop builder
+    - docker buildx rm builder
 
 trivy_scan:
   stage: scan
