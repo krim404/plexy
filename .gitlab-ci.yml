@@ -16,10 +16,8 @@ build:
     - docker:27.0.3-dind
   script:
     - docker buildx create --use --name builder
-    - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest -o type=docker .
-  after_script:
-    - docker buildx stop builder
-    - docker buildx rm builder
+    - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest .
+
 
 trivy_scan:
   stage: scan
@@ -57,9 +55,15 @@ safety:
 push:
   stage: push
   image: docker:27.0.3
+  services:
+    - docker:27.0.3-dind
   before_script:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
-    - docker push --all-tags $IMAGE_NAME
+    - docker buildx create --use --name builder
+    - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest --push . 
+  after_script:
+    - docker buildx stop builder
+    - docker buildx rm builder
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
