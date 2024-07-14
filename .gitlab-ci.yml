@@ -4,6 +4,7 @@ stages:
   - code_quality
   - safety
   - push
+  - cleanup
 
 variables:
   AFTER_SCRIPT_IGNORE_ERRORS: "true"
@@ -15,7 +16,7 @@ build:
   services:
     - docker:27.0.3-dind
   script:
-    - docker buildx create --use --name builder
+    - docker buildx create --use --name builder_$CI_PROJECT_NAME
     - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest .
 
 
@@ -60,10 +61,15 @@ push:
   before_script:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
-    - docker buildx create --use --name builder
+    - docker buildx create --use --name builder_$CI_PROJECT_NAME
     - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest --push . 
-  after_script:
-    - docker buildx stop builder
-    - docker buildx rm builder
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+cleanup-job:
+  stage: cleanup
+  allow_failure: true
+  script:
+    - docker buildx stop builder_$CI_PROJECT_NAME
+    - docker buildx rm builder_$CI_PROJECT_NAME
+  when: always
