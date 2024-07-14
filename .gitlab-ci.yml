@@ -16,7 +16,7 @@ build-and-push:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
     - docker buildx create --use --name builder
-    - docker buildx build --platform linux/amd64,linux/arm64 -t $CI_REGISTRY_IMAGE:latest --push .
+    - docker buildx build --platform linux/amd64,linux/arm64 -t $HARBOR_HOST/library/$CI_PROJECT_NAME:latest --push .
   after_script:
     - docker buildx stop builder
     - docker buildx rm builder
@@ -27,7 +27,7 @@ trivy_scan:
     name: aquasec/trivy:latest
     entrypoint: [""]
   script:
-    - trivy image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL $CI_REGISTRY_IMAGE:latest
+    - trivy image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL $HARBOR_HOST/library/$CI_PROJECT_NAME:latest
   allow_failure: true
   rules:
     - if: $CI_COMMIT_BRANCH
