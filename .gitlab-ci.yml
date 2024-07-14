@@ -68,6 +68,9 @@ push:
 
 cleanup-job:
   stage: cleanup
+  image: docker:27.0.3
+  services:
+    - docker:27.0.3-dind
   allow_failure: true
   script:
     - docker buildx stop builder_$CI_PROJECT_NAME
