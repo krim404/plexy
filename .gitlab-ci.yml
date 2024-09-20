@@ -19,6 +19,8 @@ build:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
     - docker build -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG .
+  rules:
+    - if: $CI_COMMIT_BRANCH
 
 
 trivy_scan:
