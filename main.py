@@ -42,7 +42,7 @@ async def main():
 
     # Sync loop
     while True:
-        time.sleep(0.1)
+        time.sleep(1)
         
         # Sync with the server
         sync_response = await client.sync(timeout=30000, full_state=True, since=token)
