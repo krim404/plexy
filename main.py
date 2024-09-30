@@ -2,6 +2,7 @@
 
 import logging
 import asyncio
+import time
 from nio import AsyncClient, AsyncClientConfig, RoomMessageText, InviteEvent, SyncError
 from callbacks import Callbacks
 from config import Config
