@@ -30,27 +30,27 @@ class Command(object):
 
     async def process(self):
         """Process the command"""
-        if self.command.startswith("ping"):
+        if self.command.lower().startswith("ping"):
             await send_text_to_room(self.client, self.room.room_id, "Pong!")
-        elif self.command.startswith("commands"):
+        elif self.command.lower().startswith("commands"):
             await self._show_commands()
-        elif self.command.startswith("help"):
+        elif self.command.lower().startswith("help"):
             await self._show_help()
-        elif self.command.startswith("request"):
+        elif self.command.lower().startswith("request"):
             await self._request_old()
-        elif self.command.startswith("film"):
+        elif self.command.lower().startswith("film"):
             await self._request("movie")
-        elif self.command.startswith("serie"):
+        elif self.command.lower().startswith("serie"):
             await self._request("tv")
-        elif self.command.startswith("flist"):
+        elif self.command.lower().startswith("flist"):
             await self._show_requests("movie")
-        elif self.command.startswith("tlist"):
+        elif self.command.lower().startswith("tlist"):
             await self._show_requests("tv")
-        elif self.command.startswith("tdelete"):
+        elif self.command.lower().startswith("tdelete"):
             await self._delete_requests("tv")
-        elif self.command.startswith("fdelete"):
+        elif self.command.lower().startswith("fdelete"):
             await self._delete_requests("movie")
-        elif self.command.startswith("popular"):
+        elif self.command.lower().startswith("popular"):
             await self._show_popular_movies()
         else:
             await self._unknown_command()
