@@ -78,7 +78,7 @@ cleanup-job:
   allow_failure: true
   script:
     - |
-      CONTAINERS=$(docker ps -aq --filter name=buildx_$CI_PROJECT_NAME)
+      CONTAINERS=$(docker ps -aq --filter name=builder_$CI_PROJECT_NAME)
       if [ ! -z "$CONTAINERS" ]; then
         docker stop $CONTAINERS
         docker rm $CONTAINERS
