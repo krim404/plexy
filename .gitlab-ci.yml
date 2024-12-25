@@ -77,6 +77,10 @@ cleanup-job:
     - docker:27.4.1-dind
   allow_failure: true
   script:
-    - docker buildx stop builder_$CI_PROJECT_NAME || true
-    - docker buildx rm builder_$CI_PROJECT_NAME || true
+    - |
+      CONTAINERS=$(docker ps -aq --filter name=buildx_$CI_PROJECT_NAME)
+      if [ ! -z "$CONTAINERS" ]; then
+        docker stop $CONTAINERS
+        docker rm $CONTAINERS
+      fi
   when: always
