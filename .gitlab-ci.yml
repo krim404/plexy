@@ -11,10 +11,10 @@ variables:
   IMAGE_NAME: $HARBOR_HOST/library/$CI_PROJECT_NAME
 
 build:
-  image: docker:27.4.1
+  image: docker:27.5.0
   stage: build
   services:
-    - docker:27.4.1-dind
+    - docker:27.5.0-dind
   before_script:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
@@ -59,9 +59,9 @@ safety:
 
 push:
   stage: push
-  image: docker:27.4.1
+  image: docker:27.5.0
   services:
-    - docker:27.4.1-dind
+    - docker:27.5.0-dind
   before_script:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
@@ -72,9 +72,9 @@ push:
 
 cleanup-job:
   stage: cleanup
-  image: docker:27.4.1
+  image: docker:27.5.0
   services:
-    - docker:27.4.1-dind
+    - docker:27.5.0-dind
   allow_failure: true
   script:
     - |
