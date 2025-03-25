@@ -1,4 +1,4 @@
-FROM registry.krim.dev/proxy/library/python:3.12
+FROM python:3.12
 
 LABEL name="Plexy"
 LABEL authors="Felix and Krim"
