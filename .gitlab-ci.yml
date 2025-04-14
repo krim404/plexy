@@ -13,8 +13,6 @@ variables:
 build:
   image: docker:27.5.0
   stage: build
-  services:
-    - docker:27.5.0-dind
   before_script:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
@@ -60,12 +58,10 @@ safety:
 push:
   stage: push
   image: docker:27.5.0
-  services:
-    - docker:27.5.0-dind
   before_script:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
-    - docker buildx create --use --name builder_$CI_PROJECT_NAME
+    - docker buildx create --driver remote --use tcp://docker:2376 --name builder_$CI_PROJECT_NAME
     - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest --push . 
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -73,8 +69,6 @@ push:
 cleanup-job:
   stage: cleanup
   image: docker:27.5.0
-  services:
-    - docker:27.5.0-dind
   allow_failure: true
   script:
     - |
