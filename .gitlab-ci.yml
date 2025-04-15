@@ -4,7 +4,6 @@ stages:
   - scan
   - code_quality
   - safety
-  - cleanup
 
 variables:
   AFTER_SCRIPT_IGNORE_ERRORS: "true"
@@ -61,7 +60,8 @@ push:
   before_script:
     - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
   script:
-    - docker buildx create --driver remote --use tcp://docker:2376 --name builder_$CI_PROJECT_NAME
+    - docker context create dind --docker "host=tcp://docker:2376,ca=$DOCKER_CERT_PATH/ca.pem,cert=$DOCKER_CERT_PATH/cert.pem,key=$DOCKER_CERT_PATH/key.pem"
+    - docker buildx create --use dind --name builder_$CI_PROJECT_NAME
     - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest --push . 
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
