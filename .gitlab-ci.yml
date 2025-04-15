@@ -66,15 +66,3 @@ push:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-cleanup-job:
-  stage: cleanup
-  image: docker:27.5.0
-  allow_failure: true
-  script:
-    - |
-      CONTAINERS=$(docker ps -aq --filter name=builder_$CI_PROJECT_NAME)
-      if [ ! -z "$CONTAINERS" ]; then
-        docker stop $CONTAINERS
-        docker rm $CONTAINERS
-      fi
-  when: always
