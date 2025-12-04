@@ -4,6 +4,7 @@ stages:
   - scan
   - code_quality
   - safety
+  - sign
 
 variables:
   AFTER_SCRIPT_IGNORE_ERRORS: "true"
@@ -62,7 +63,16 @@ push:
   script:
     - docker context create dind --docker "host=tcp://docker:2376,ca=$DOCKER_CERT_PATH/ca.pem,cert=$DOCKER_CERT_PATH/cert.pem,key=$DOCKER_CERT_PATH/key.pem"
     - docker buildx create --use dind --name builder_$CI_PROJECT_NAME
-    - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest --push . 
+    - docker buildx build --platform linux/amd64,linux/arm64 -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG -t $IMAGE_NAME:latest --push .
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
+sign:
+  stage: sign
+  image: bitnami/cosign:latest
+  before_script:
+    - cosign login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
+  script:
+    - cosign sign --yes --new-bundle-format=false --use-signing-config=false --key $COSIGN_PRIVATE_KEY $IMAGE_NAME:$CI_COMMIT_REF_SLUG
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
