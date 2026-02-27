@@ -41,11 +41,11 @@ logging:
     # Whether logging to the console is enabled
     enabled: true
 
-# Ombi setup
-ombi:
-  # The URL of Ombi server to connect to
-  url: http://ombi.example.com
-  # Secret key for the Ombi API (found in settings > Ombi)
+# Seerr setup
+seerr:
+  # The URL of Seerr server to connect to
+  url: http://seerr.example.com:5055
+  # Secret key for the Seerr API (found in Settings > General)
   apikey: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # TMBd setup
@@ -54,4 +54,3 @@ moviedb:
   language: de-de
   # Secret key for the TMDb API
   apikey: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-

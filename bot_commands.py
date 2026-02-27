@@ -61,34 +61,38 @@ class Command(object):
             text = "Hallo, ich bin **Plexy**. Mit `!plex commands` kannst du dir alle meine Befehle anzeigen lassen."
             await send_text_to_room(self.client, self.room.room_id, text)
             return
+
     async def _request_old(self):
-        """Show the Plexy help text"""
+        """Show deprecation notice for old command"""
         if not self.args:
             text = "Der Befehl hat sich geändert - siehe !plex commands"
             await send_text_to_room(self.client, self.room.room_id, text)
             return
+
     async def _show_commands(self):
         """Show all available commands"""
         text = "**Verfügbare Befehle**:<br>- `!plex film <Filmname>` -- Fordert einen gewünschten Film an.<br>- `!plex serie <Serienname>` -- Fordert eine gewünschte Serie an.<br>- `!plex flist` -- Listet alle angefragten Filme auf.<br>- `!plex tlist` -- Listet alle angefragten Serien auf.<br>- `!plex fdelete` -- Löscht alle Filmanfragen, die verfügbar sind.<br>- `!plex tdelete` -- Löscht alle Serienanfragen, die verfügbar sind.<br>- `!plex popular <Anzahl>` -- Zeigt aktuell beliebte Filme an."
         await send_text_to_room(self.client, self.room.room_id, text)
 
     async def _show_requests(self, was: str = "movie"):
-        """Shows the movies which are currently requested in Ombi."""
-        if was == "movie":
-            text = "Das sind die aktuell in Ombi angefragten Filme:"
-        elif was == "tv":
-            text = "Das sind die aktuell in Ombi angefragten Serien:"
-
+        """Shows the movies/TV shows which are currently requested."""
         requests = self.plexy.getAvailRequests(False, was)
         if not requests:
             text = "Aktuell sind keine Inhalte angefragt!"
             await send_text_to_room(self.client, self.room.room_id, text)
             return
-        for movie in requests:
-            if was == "movie":
-                text = f"{text}<br>- [{movie['title']}](https://www.themoviedb.org/movie/{movie['theMovieDbId']})"
-            elif was == "tv":
-                text = f"{text}<br>- [{movie['title']}](https://www.imdb.com/title/{movie['imdbId']})"
+
+        if was == "movie":
+            text = "Das sind die aktuell angefragten Filme:"
+        elif was == "tv":
+            text = "Das sind die aktuell angefragten Serien:"
+
+        for req in requests:
+            tmdb_id = req.get("media", {}).get("tmdbId")
+            if tmdb_id:
+                title = self.plexy.getTitle(tmdb_id, was)
+                text = f"{text}<br>- [{title}](https://www.themoviedb.org/{was}/{tmdb_id})"
+
         await send_text_to_room(self.client, self.room.room_id, text)
         return
 
@@ -118,7 +122,7 @@ class Command(object):
         return
 
     async def _request(self, was: str = "movie"):
-        """Request a movie via ombi"""
+        """Request a movie or TV show via Seerr"""
         # Output if no film title is given as parameter
         if not self.args:
             text = "Bitte einen Filmtitel angeben :) zum Beispiel `!plex film Deadpool`."
@@ -137,18 +141,19 @@ class Command(object):
         title = self.plexy.getTitle(id, was)
         try:
             result = self.plexy.sendRequest(id, was)
-            if result.json()["isError"] == True:
-                text = f"Fehler bei [{title}](https://www.themoviedb.org/{was}/{id}): " + result.json()["errorMessage"]
+            if result.status_code >= 400:
+                error_msg = result.json().get("message", "Unbekannter Fehler")
+                text = f"Fehler bei [{title}](https://www.themoviedb.org/{was}/{id}): {error_msg}"
             else:
                 text = f"Ich habe [{title}](https://www.themoviedb.org/{was}/{id}) für dich angefordert."
             await send_text_to_room(self.client, self.room.room_id, text)
-        except UserWarning:
+        except Exception:
             text = "Es trat ein Fehler beim Anfordern des Titels auf."
             await send_text_to_room(self.client, self.room.room_id, text)
         return
 
     async def _delete_requests(self, was: str = "movie"):
-        """Delete all movie requests in ombi which are available within Plex"""
+        """Delete all requests which are available"""
         # Check if event.sender is in whitelist, else cancel command
         if (self.config.admin_whitelist_enabled) and (
             self.event.sender not in self.config.admin_whitelist

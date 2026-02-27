@@ -89,18 +89,16 @@ class Config(object):
         if not self.homeserver_url:
             raise ConfigError("matrix.homeserver_url is a required field")
 
-        # ombi setup
-        ombi = config.get("ombi", {})
+        # Seerr setup
+        seerr = config.get("seerr", {})
 
-        self.url = ombi.get("url")
+        self.url = seerr.get("url")
         if not self.url:
-            raise ConfigError("ombi.url is a required field")
+            raise ConfigError("seerr.url is a required field")
 
-        self.ombi_apikey = ombi.get("apikey")
-        if not self.ombi_apikey:
-            raise ConfigError("ombi.apikey is a required field")
-        if not len(self.ombi_apikey) == 32:
-            raise ConfigError("Length of ombi.apikey is not correct")
+        self.seerr_apikey = seerr.get("apikey")
+        if not self.seerr_apikey:
+            raise ConfigError("seerr.apikey is a required field")
 
         # moviedb setup
         moviedb = config.get("moviedb", {})
@@ -117,10 +115,6 @@ class Config(object):
 
         tvdb = config.get("tvdb",{})
         self.tvdb_apikey = tvdb.get("apikey")
-        #if not self.tvdb_apikey:
-        #    raise ConfigError("tvdb.apikey is a required field")
         self.tvdbkey = ""
 
         self.command_prefix = config.get("command_prefix", "!c") + " "
-
-
