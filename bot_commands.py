@@ -142,7 +142,8 @@ class Command(object):
         try:
             result = self.plexy.sendRequest(id, was)
             if result.status_code >= 400:
-                error_msg = result.json().get("message", "Unbekannter Fehler")
+                resp = result.json()
+                error_msg = resp.get("error", resp.get("message", "Unbekannter Fehler"))
                 text = f"Fehler bei [{title}](https://www.themoviedb.org/{was}/{id}): {error_msg}"
             else:
                 text = f"Ich habe [{title}](https://www.themoviedb.org/{was}/{id}) für dich angefordert."

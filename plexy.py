@@ -72,12 +72,22 @@ class Plexy(object):
             return "nothing"
         return str(json_data["results"][0]["id"])
 
+    def _get_season_count(self, tmdb_id):
+        """Get the number of seasons for a TV show from TMDb."""
+        url = f"https://api.themoviedb.org/3/tv/{tmdb_id}"
+        params = {"api_key": self.config.moviedb_apikey}
+        response = requests.get(url, params=params)
+        return response.json().get("number_of_seasons", 1)
+
     def sendRequest(self, id, was: str = "movie"):
         """Request a specific TMDB ID via Seerr."""
         data = {
             "mediaId": int(id),
             "mediaType": was,
         }
+        if was == "tv":
+            season_count = self._get_season_count(id)
+            data["seasons"] = list(range(1, season_count + 1))
         return self._seerr_post("/request", data)
 
     def getTitle(self, id, was: str = "movie"):
