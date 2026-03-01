@@ -2,7 +2,6 @@
 
 import logging
 import asyncio
-import time
 from nio import AsyncClient, AsyncClientConfig, RoomMessageText, InviteEvent, SyncError
 from callbacks import Callbacks
 from config import Config
@@ -40,17 +39,24 @@ async def main():
     # Retrieve the last sync token if it exists
     token = store.get_sync_token()
 
+    # Initial sync with full state to catch up
+    first_sync = True
+
     # Sync loop
     while True:
-        time.sleep(1)
-        
-        # Sync with the server
-        sync_response = await client.sync(timeout=30000, full_state=True, since=token)
+        await asyncio.sleep(1)
+
+        # Only request full state on first sync after startup
+        sync_response = await client.sync(
+            timeout=30000, full_state=first_sync, since=token
+        )
 
         # Check if the sync had an error
         if type(sync_response) == SyncError:
             logger.warning("Error in client sync: %s", sync_response.message)
             continue
+
+        first_sync = False
 
         # Save the latest sync token
         token = sync_response.next_batch
@@ -58,4 +64,4 @@ async def main():
             store.save_sync_token(token)
 
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(main())
