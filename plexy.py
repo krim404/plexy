@@ -3,6 +3,8 @@ import logging
 
 logger = logging.getLogger()
 
+REQUEST_TIMEOUT = 10
+
 
 class Plexy(object):
     def __init__(self, config):
@@ -22,17 +24,17 @@ class Plexy(object):
     def _seerr_get(self, path, params=None):
         """Make a GET request to the Seerr API."""
         url = f"{self.config.url}/api/v1{path}"
-        return requests.get(url, headers=self.headers, params=params)
+        return requests.get(url, headers=self.headers, params=params, timeout=REQUEST_TIMEOUT)
 
     def _seerr_post(self, path, data):
         """Make a POST request to the Seerr API."""
         url = f"{self.config.url}/api/v1{path}"
-        return requests.post(url, headers=self.headers, json=data)
+        return requests.post(url, headers=self.headers, json=data, timeout=REQUEST_TIMEOUT)
 
     def _seerr_delete(self, path):
         """Make a DELETE request to the Seerr API."""
         url = f"{self.config.url}/api/v1{path}"
-        return requests.delete(url, headers=self.headers)
+        return requests.delete(url, headers=self.headers, timeout=REQUEST_TIMEOUT)
 
     def getAvailRequests(self, available=True, was="movie"):
         """Return a list of available request IDs or all request data from Seerr."""
@@ -66,7 +68,7 @@ class Plexy(object):
             "language": self.config.language,
             "query": title,
         }
-        response = requests.get(url, params=querystring)
+        response = requests.get(url, params=querystring, timeout=REQUEST_TIMEOUT)
         json_data = response.json()
         if json_data["total_results"] < 1:
             return "nothing"
@@ -76,7 +78,7 @@ class Plexy(object):
         """Get the number of seasons for a TV show from TMDb."""
         url = f"https://api.themoviedb.org/3/tv/{tmdb_id}"
         params = {"api_key": self.config.moviedb_apikey}
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT)
         return response.json().get("number_of_seasons", 1)
 
     def sendRequest(self, id, was: str = "movie"):
@@ -97,7 +99,7 @@ class Plexy(object):
             "api_key": self.config.moviedb_apikey,
             "language": self.config.language,
         }
-        response = requests.get(url, params=querystring)
+        response = requests.get(url, params=querystring, timeout=REQUEST_TIMEOUT)
         if was == "movie":
             return response.json()["title"]
         elif was == "tv":
@@ -131,7 +133,7 @@ class Plexy(object):
             "language": self.config.language,
             "sort_by": "popularity.desc",
         }
-        json_response = requests.get(url, params=params).json()
+        json_response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT).json()
         popular_list = [
             (movie["id"], movie["title"]) for movie in json_response["results"][:amount]
         ]

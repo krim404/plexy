@@ -76,7 +76,11 @@ class Command(object):
 
     async def _show_requests(self, was: str = "movie"):
         """Shows the movies/TV shows which are currently requested."""
-        requests = self.plexy.getAvailRequests(False, was)
+        try:
+            requests = self.plexy.getAvailRequests(False, was)
+        except Exception:
+            await send_text_to_room(self.client, self.room.room_id, "Fehler beim Abrufen der Anfragen.")
+            return
         if not requests:
             text = "Aktuell sind keine Inhalte angefragt!"
             await send_text_to_room(self.client, self.room.room_id, text)
@@ -90,7 +94,10 @@ class Command(object):
         for req in requests:
             tmdb_id = req.get("media", {}).get("tmdbId")
             if tmdb_id:
-                title = self.plexy.getTitle(tmdb_id, was)
+                try:
+                    title = self.plexy.getTitle(tmdb_id, was)
+                except Exception:
+                    title = f"ID {tmdb_id}"
                 text = f"{text}<br>- [{title}](https://www.themoviedb.org/{was}/{tmdb_id})"
 
         await send_text_to_room(self.client, self.room.room_id, text)
@@ -100,23 +107,20 @@ class Command(object):
         """Shows the most popular movies from MovieDB"""
         text = f"Hey {self.event.sender}, hier sind aktuell beliebte Kinofilme:"
         # Default to three movies if no parameter is given
-        if not self.args:
-            movies = self.plexy.getPopularMovies(3)
-            for x in movies:
-                text = f"{text}<br>- [{x[1]}](https://www.themoviedb.org/movie/{x[0]})"
-        else:
-            # Check if a integer value has been entered and is in range
-            try:
+        try:
+            if not self.args:
+                movies = self.plexy.getPopularMovies(3)
+            else:
                 amount = int(self.args[0])
                 if amount not in range(1, 16):
                     raise ValueError
-                movies = self.plexy.getPopularMovies(int(self.args[0]))
-                for x in movies:
-                    text = (
-                        f"{text}<br>- [{x[1]}](https://www.themoviedb.org/movie/{x[0]})"
-                    )
-            except ValueError:
-                text = "Du hast keine gültige Zahl (1-15) eingegeben."
+                movies = self.plexy.getPopularMovies(amount)
+            for x in movies:
+                text = f"{text}<br>- [{x[1]}](https://www.themoviedb.org/movie/{x[0]})"
+        except ValueError:
+            text = "Du hast keine gültige Zahl (1-15) eingegeben."
+        except Exception:
+            text = "Fehler beim Abrufen der beliebten Filme."
 
         await send_text_to_room(self.client, self.room.room_id, text)
         return
@@ -129,7 +133,11 @@ class Command(object):
             await send_text_to_room(self.client, self.room.room_id, text)
             return
         requested_title = " ".join(self.args)
-        id = self.plexy.getID(requested_title, was)
+        try:
+            id = self.plexy.getID(requested_title, was)
+        except Exception:
+            await send_text_to_room(self.client, self.room.room_id, "Fehler bei der Suche.")
+            return
 
         # If above method returns no movies, send info regarding that
         if id == "nothing":
@@ -138,7 +146,10 @@ class Command(object):
             )
             return
         # Get German movie title for display reasons
-        title = self.plexy.getTitle(id, was)
+        try:
+            title = self.plexy.getTitle(id, was)
+        except Exception:
+            title = requested_title
         try:
             result = self.plexy.sendRequest(id, was)
             if result.status_code >= 400:
@@ -161,13 +172,16 @@ class Command(object):
         ):
             return
         # Response depending if any requests are available for deletion
-        if self.plexy.delete_requests(was):
-            if was == "movie":
-                text = f"{self.event.sender}, ich habe die verfügbaren Filme gelöscht!"
-            elif was == "tv":
-                text = f"{self.event.sender}, ich habe die verfügbaren Serien gelöscht!"
-        else:
-            text = "Es gibt keine Requests zum Löschen!"
+        try:
+            if self.plexy.delete_requests(was):
+                if was == "movie":
+                    text = f"{self.event.sender}, ich habe die verfügbaren Filme gelöscht!"
+                elif was == "tv":
+                    text = f"{self.event.sender}, ich habe die verfügbaren Serien gelöscht!"
+            else:
+                text = "Es gibt keine Requests zum Löschen!"
+        except Exception:
+            text = "Fehler beim Löschen der Anfragen."
         await send_text_to_room(self.client, self.room.room_id, text)
 
     async def _unknown_command(self):
