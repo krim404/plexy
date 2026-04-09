@@ -60,8 +60,6 @@ push:
     - docker buildx build --platform linux/amd64,linux/arm64
         -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG
         -t $IMAGE_NAME:latest
-        --cache-from type=registry,ref=$IMAGE_NAME:buildcache
-        --cache-to type=registry,ref=$IMAGE_NAME:buildcache,mode=max
         --push .
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
