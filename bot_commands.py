@@ -171,17 +171,33 @@ class Command(object):
             self.event.sender not in self.config.admin_whitelist
         ):
             return
-        # Response depending if any requests are available for deletion
         try:
-            if self.plexy.delete_requests(was):
-                if was == "movie":
-                    text = f"{self.event.sender}, ich habe die verfügbaren Filme gelöscht!"
-                elif was == "tv":
-                    text = f"{self.event.sender}, ich habe die verfügbaren Serien gelöscht!"
-            else:
-                text = "Es gibt keine Requests zum Löschen!"
+            deleted = self.plexy.delete_requests(was)
         except Exception:
-            text = "Fehler beim Löschen der Anfragen."
+            await send_text_to_room(
+                self.client, self.room.room_id, "Fehler beim Löschen der Anfragen."
+            )
+            return
+        if not deleted:
+            await send_text_to_room(
+                self.client, self.room.room_id, "Es gibt keine Requests zum Löschen!"
+            )
+            return
+
+        if was == "movie":
+            text = f"{self.event.sender}, ich habe folgende Filme gelöscht:"
+        elif was == "tv":
+            text = f"{self.event.sender}, ich habe folgende Serien gelöscht:"
+
+        for req in deleted:
+            tmdb_id = req.get("media", {}).get("tmdbId")
+            if tmdb_id:
+                try:
+                    title = self.plexy.getTitle(tmdb_id, was)
+                except Exception:
+                    title = f"ID {tmdb_id}"
+                text = f"{text}<br>- [{title}](https://www.themoviedb.org/{was}/{tmdb_id})"
+
         await send_text_to_room(self.client, self.room.room_id, text)
 
     async def _unknown_command(self):

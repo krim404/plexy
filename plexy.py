@@ -37,7 +37,11 @@ class Plexy(object):
         return requests.delete(url, headers=self.headers, timeout=REQUEST_TIMEOUT)
 
     def getAvailRequests(self, available=True, was="movie"):
-        """Return a list of available request IDs or all request data from Seerr."""
+        """Return request data filtered by media type.
+
+        If available=True, only requests with media.status AVAILABLE (5) or
+        PARTIALLY_AVAILABLE (4) are returned.
+        """
         params = {"take": 100}
 
         response = self._seerr_get("/request", params=params)
@@ -71,20 +75,7 @@ class Plexy(object):
                     "Skipped request: id=%s tmdbId=%s media.status=%s",
                     r.get("id"), tmdb_id, media_status,
                 )
-        return [str(r["id"]) for r in deletable]
-
-    def delAvailRequests(self, availRequests, was="movie"):
-        """Delete requests by their IDs."""
-        if not availRequests:
-            logger.info("No deletable requests for type %s", was)
-            return 0
-        for request_id in availRequests:
-            response = self._seerr_delete(f"/request/{request_id}")
-            logger.info(
-                "Deleted request id=%s http_status=%s",
-                request_id, response.status_code,
-            )
-        return 1
+        return deletable
 
     def getID(self, title, was: str = "movie"):
         """Get MovieDB ID from the movie title."""
@@ -166,7 +157,19 @@ class Plexy(object):
         return popular_list
 
     def delete_requests(self, was: str = "movie"):
-        """Delete all requests which are available."""
-        if not self.delAvailRequests(self.getAvailRequests(True, was), was):
-            return 0
-        return 1
+        """Delete all available requests. Returns list of successfully deleted request dicts."""
+        deletable = self.getAvailRequests(True, was)
+        if not deletable:
+            logger.info("No deletable requests for type %s", was)
+            return []
+        deleted = []
+        for r in deletable:
+            request_id = r["id"]
+            response = self._seerr_delete(f"/request/{request_id}")
+            logger.info(
+                "Deleted request id=%s http_status=%s",
+                request_id, response.status_code,
+            )
+            if response.status_code < 400:
+                deleted.append(r)
+        return deleted
