@@ -60,9 +60,10 @@ push:
     - docker buildx build --platform linux/amd64,linux/arm64
         -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG
         -t $IMAGE_NAME:latest
+        --metadata-file metadata.json
         --push .
-    - DIGEST=$(docker buildx imagetools inspect $IMAGE_NAME:$CI_COMMIT_REF_SLUG | awk '/^Digest:/ {print $2; exit}')
-    - test -n "$DIGEST" || { echo "Failed to resolve image digest"; exit 1; }
+    - DIGEST=$(tr -d '[:space:]' < metadata.json | grep -oE '"containerimage\.digest":"sha256:[a-f0-9]+"' | grep -oE 'sha256:[a-f0-9]+')
+    - test -n "$DIGEST" || { echo "Failed to resolve image digest"; cat metadata.json; exit 1; }
     - echo "IMAGE_DIGEST=$DIGEST" > build.env
   artifacts:
     reports:
