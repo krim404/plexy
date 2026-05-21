@@ -61,14 +61,23 @@ push:
         -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG
         -t $IMAGE_NAME:latest
         --push .
+    - DIGEST=$(docker buildx imagetools inspect $IMAGE_NAME:$CI_COMMIT_REF_SLUG | awk '/^Digest:/ {print $2; exit}')
+    - test -n "$DIGEST" || { echo "Failed to resolve image digest"; exit 1; }
+    - echo "IMAGE_DIGEST=$DIGEST" > build.env
+  artifacts:
+    reports:
+      dotenv: build.env
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 sign:
   stage: sign
   image: bitnami/cosign:latest
+  needs:
+    - job: push
+      artifacts: true
   script:
     - cosign login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
-    - cosign sign --yes --new-bundle-format=false --use-signing-config=false --key $COSIGN_PRIVATE_KEY $IMAGE_NAME:$CI_COMMIT_REF_SLUG
+    - cosign sign --yes --tlog-upload=false --new-bundle-format=false --use-signing-config=false --key $COSIGN_PRIVATE_KEY $IMAGE_NAME@$IMAGE_DIGEST
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
