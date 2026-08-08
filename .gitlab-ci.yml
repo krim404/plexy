@@ -1,84 +1,10 @@
-stages:
-  - build
-  - push
-  - scan
-  - code_quality
-  - safety
-  - sign
+include:
+  - project: library/ci-templates
+    ref: v1.2
+    file: /docker-image.yml
+  - project: library/ci-templates
+    ref: v1.2
+    file: /jobs/test-python.yml
 
-variables:
-  AFTER_SCRIPT_IGNORE_ERRORS: "true"
-  IMAGE_NAME: $HARBOR_HOST/library/$CI_PROJECT_NAME
-
-build:
-  image: docker:29
-  stage: build
-  script:
-    - docker buildx build -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG .
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH
-
-trivy_scan:
-  stage: scan
-  image:
-    name: aquasec/trivy:latest
-    entrypoint: [""]
-  script:
-    - trivy image --exit-code 1 --ignore-unfixed --severity HIGH,CRITICAL $IMAGE_NAME:$CI_COMMIT_REF_SLUG
-  allow_failure: true
-  rules:
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-
-code_quality:
-  stage: code_quality
-  image: python:3.14
-  before_script:
-    - pip install flake8
-  script:
-    - flake8 .
-  allow_failure: true
-  rules:
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-
-safety:
-  stage: safety
-  image: python:3.14
-  before_script:
-    - pip install safety
-  script:
-    - safety check
-  allow_failure: true
-  rules:
-    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
-
-push:
-  stage: push
-  image: docker:29
-  script:
-    - docker login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
-    - docker buildx build --platform linux/amd64,linux/arm64
-        -t $IMAGE_NAME:$CI_COMMIT_REF_SLUG
-        -t $IMAGE_NAME:latest
-        --metadata-file metadata.json
-        --push .
-    - DIGEST=$(tr -d '[:space:]' < metadata.json | grep -oE '"containerimage\.digest":"sha256:[a-f0-9]+"' | grep -oE 'sha256:[a-f0-9]+')
-    - test -n "$DIGEST" || { echo "Failed to resolve image digest"; cat metadata.json; exit 1; }
-    - echo "IMAGE_DIGEST=$DIGEST" > build.env
-  artifacts:
-    reports:
-      dotenv: build.env
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-
-sign:
-  stage: sign
-  image: bitnami/cosign:latest
-  needs:
-    - job: push
-      artifacts: true
-  script:
-    - cosign login -u $HARBOR_USERNAME -p $HARBOR_PASSWORD $HARBOR_HOST
-    - cosign sign --yes --tlog-upload=false --new-bundle-format=false --use-signing-config=false --key $COSIGN_PRIVATE_KEY $IMAGE_NAME@$IMAGE_DIGEST
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+lint_python:
+  extends: .python-lint
