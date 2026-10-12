@@ -2,12 +2,15 @@
 
 import logging
 import asyncio
+import aiohttp
 from nio import AsyncClient, AsyncClientConfig, RoomMessageText, InviteEvent, SyncError
 from callbacks import Callbacks
 from config import Config
 from storage import Storage
 
 logger = logging.getLogger(__name__)
+
+MAX_SYNC_FAILURES = 10
 
 
 async def main():
@@ -42,14 +45,27 @@ async def main():
     # Initial sync with full state to catch up
     first_sync = True
 
+    # Consecutive sync exceptions
+    failures = 0
+
     # Sync loop
     while True:
         await asyncio.sleep(1)
 
         # Only request full state on first sync after startup
-        sync_response = await client.sync(
-            timeout=30000, full_state=first_sync, since=token
-        )
+        try:
+            sync_response = await client.sync(
+                timeout=30000, full_state=first_sync, since=token
+            )
+        except (asyncio.TimeoutError, aiohttp.ClientError) as exc:
+            failures += 1
+            logger.warning(
+                "Sync failed (%d/%d): %r", failures, MAX_SYNC_FAILURES, exc
+            )
+            if failures >= MAX_SYNC_FAILURES:
+                raise
+            continue
+        failures = 0
 
         # Check if the sync had an error
         if type(sync_response) == SyncError:
